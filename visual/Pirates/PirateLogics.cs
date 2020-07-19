@@ -20,16 +20,22 @@ namespace Pirates
             Conquerors = new Stack<Pirate>(); // Check about how do I get the stack
             List<Pirate> AvailablePirates = pirateGame.AllMyPirates();
             Pirate[] tempArr = AssignedConquerors.Keys.ToArray();
+            List<Direction> tempDirection;
+            pirateGame.Debug("available: " + AvailablePirates.Count);
+            pirateGame.Debug("temp arrr" + tempArr.Length);
             for (int i = 0; i < tempArr.Length; i++)
             {
-                if (AssignedConquerors[tempArr[i]].Owner == -1)  // Check in Debug!!
+                tempDirection = pirateGame.GetDirections(tempArr[i], AssignedConquerors[tempArr[i]]);
+                pirateGame.SetSail(tempArr[i], tempDirection[0]);
+                if (AssignedConquerors[tempArr[i]].Owner == 0)
                 {
                     AssignedConquerors.Remove(tempArr[i]);
                     continue;
                 }
+                
                 AvailablePirates.Remove(tempArr[i]);
             }
-
+            pirateGame.Debug("available: " + AvailablePirates.Count);
             foreach (Pirate p in AvailablePirates)
             {
                 
@@ -50,7 +56,6 @@ namespace Pirates
             int tempDistance;
             List<Island> targetedIslands = new List<Island>();
             Island ClosestIsland = notOurIslands[0];
-            List<Direction> tempDirection;
             while(!(Conquerors.Count == 0))
             {
                 tempPirate = Conquerors.Pop();
