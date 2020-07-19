@@ -9,7 +9,7 @@ namespace Pirates
     public class PirateLogics : Pirates.IPirateBot
     {
         public Stack<Pirate> Conquerors { get; set; }
-        public static Dictionary<int, Island> AssignedConquerors { get; set; } = new Dictionary<int, Island>();
+        public static Dictionary<int, int> AssignedConquerors { get; set; } = new Dictionary<int, int>();
         public void DoTurn(IPirateGame state)
         {
             SendConquerors(state);
@@ -21,32 +21,30 @@ namespace Pirates
             List<Pirate> AvailablePirates = pirateGame.AllMyPirates();
             int[] tempArr = AssignedConquerors.Keys.ToArray();
             List<Direction> tempDirection;
-            pirateGame.Debug("available: " + AvailablePirates.Count);
-            pirateGame.Debug("temp arrr" + tempArr.Length);
+            pirateGame.Debug("available: " + AvailablePirates.Count);  // Delete
+            pirateGame.Debug("temp arrr" + tempArr.Length);  // Delete
             Pirate tempPirate;
+            Island tempIsland;
             for (int i = 0; i < tempArr.Length; i++)
             {
-                tempPirate = pirateGame.GetMyPirate(tempArr[i]);
-                tempDirection = pirateGame.GetDirections(tempPirate, AssignedConquerors[tempArr[i]]);
-                pirateGame.SetSail(tempPirate, tempDirection[0]);
-                if (AssignedConquerors[tempArr[i]].Owner == 0)
+                tempIsland = pirateGame.GetIsland(AssignedConquerors[tempArr[i]]);
+                pirateGame.Debug("" + tempIsland.Owner);
+                if (tempIsland.Owner == 0)
                 {
                     AssignedConquerors.Remove(tempArr[i]);
                     continue;
                 }
-                
+
+                tempPirate = pirateGame.GetMyPirate(tempArr[i]);
+                tempDirection = pirateGame.GetDirections(tempPirate, tempIsland);
+                pirateGame.SetSail(tempPirate, tempDirection[0]);           
                 AvailablePirates.Remove(tempPirate);
             }
             pirateGame.Debug("available: " + AvailablePirates.Count);
             foreach (Pirate p in AvailablePirates)
             {
-                
-                if (!p.IsLost)
-                {
-                    Conquerors.Push(p);
-                }
+                Conquerors.Push(p);
             }
-
             Stack<Pirate> tempStack = new Stack<Pirate>(); // Check about how do I get the stack
             List<Island> notOurIslands = pirateGame.NotMyIslands();
             if(notOurIslands.Count == 0 || AvailablePirates.Count == 0)
@@ -72,7 +70,7 @@ namespace Pirates
                 }
                 tempDirection = pirateGame.GetDirections(tempPirate, ClosestIsland); // Check List Results
                 pirateGame.SetSail(tempPirate, tempDirection[0]);
-                AssignedConquerors.Add(tempPirate.Id, ClosestIsland);
+                AssignedConquerors.Add(tempPirate.Id, ClosestIsland.Id);
                 targetedIslands.Add(ClosestIsland);
                 notOurIslands.Remove(ClosestIsland);
                 if(notOurIslands.Count == 0)
