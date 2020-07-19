@@ -12,7 +12,6 @@ namespace Pirates
         public static Dictionary<Pirate, Island> AssignedConquerors { get; set; } = new Dictionary<Pirate, Island>();
         public void DoTurn(IPirateGame state)
         {
-            Conquerors = new Stack<Pirate>();
             SendConquerors(state);
         }
 
