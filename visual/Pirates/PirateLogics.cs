@@ -377,14 +377,15 @@ namespace Pirates
             // go over the the stack and check for each pirate its location
             while (MyAttackers.Count != 0)
             {
-                state.Debug("From unite: " + (state.GetMyPirate(MyAttackers.Peek()).Loc.Col == firstAttackerLocation.Col));
-                if (state.GetMyPirate(MyAttackers.Peek()).Loc.Col != firstAttackerLocation.Col && !(state.GetMyPirate(MyAttackers.Peek()).Loc.Row - firstAttackerLocation.Row <= 1))
+                state.Debug("From unite: " + (state.GetMyPirate(MyAttackers.Peek()).Loc.Col) + " "+  firstAttackerLocation.Col);
+                state.Debug("From unite: " + !(state.GetMyPirate(MyAttackers.Peek()).Loc.Col - firstAttackerLocation.Col <= 1));
+                if (state.GetMyPirate(MyAttackers.Peek()).Loc.Col != firstAttackerLocation.Col || !(state.GetMyPirate(MyAttackers.Peek()).Loc.Row - firstAttackerLocation.Row <= 1))
                 {
                     state.SetSail(state.GetMyPirate(MyAttackers.Peek()), state.GetDirections(state.GetMyPirate(MyAttackers.Peek()), firstAttackerLocation)[0]);
                     isAllOk = false;            // it means that one of the pirates is in the wrong location
                 }
 
-                else if (state.GetMyPirate(MyAttackers.Peek()).Loc.Row != firstAttackerLocation.Row && !(state.GetMyPirate(MyAttackers.Peek()).Loc.Col - firstAttackerLocation.Col <= 1))
+                else if (state.GetMyPirate(MyAttackers.Peek()).Loc.Row != firstAttackerLocation.Row || !(state.GetMyPirate(MyAttackers.Peek()).Loc.Col - firstAttackerLocation.Col <= 1))
                 {
 
                     // move the pirate one step to the main pirate location
