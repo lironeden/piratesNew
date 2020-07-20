@@ -15,6 +15,7 @@ namespace Pirates
         public int MyPirateAlive { get; set; }
         public int EnemyPiratesAlive { get; set; }
         public bool Init { get; set; }
+        public bool IsAttackersUnited { get; set; }
         public PirateLogics()
         {
             AssignedConquerors = new Dictionary<int, int>();
@@ -24,21 +25,31 @@ namespace Pirates
             MyPirateAlive = 5;
             EnemyPiratesAlive = 5;
             Init = true;
+            IsAttackersUnited = false;
         }
 
         public void DoTurn(IPirateGame state)
         {
             int myPirateAlive = AllMyAlivePirates(state).Count;
             int enemyPiratesAlive = AllEnemyAlivePirates(state).Count;
-            if(Init || CheckStateHasChanged(state, myPirateAlive, enemyPiratesAlive))
+            if(Init || !CheckStateHasChanged(state, myPirateAlive, enemyPiratesAlive))
             {
+                state.Debug("called");
                 SetStacks(state);
                 Init = false;
             }
             state.Debug("Stack 1: " + MyAttackers.Count);
             state.Debug("Stack 2: " + Conquerors.Count);
-            Location temoLocationToEnemy = GetLoctionToDrown(state);
-            MoveToAttack(temoLocationToEnemy, state);
+            if (!IsAttackersUnited)
+            {
+                UinteAttackers(state);
+                state.Debug("Distance " + state.Distance(state.AllMyPirates()[0], state.AllMyPirates()[1]));
+            }
+            else
+            {
+                Location temoLocationToEnemy = GetLoctionToDrown(state);
+                MoveToAttack(temoLocationToEnemy, state);
+            }
             SendConquerors(state);
         }
 
@@ -156,6 +167,10 @@ namespace Pirates
 
         public Location GetLoctionToDrown(IPirateGame state)
         {
+            if(MyAttackers.Count == 0)
+            {
+                return new Location(0, 0);
+            }
             Location attackersLocation = state.GetMyPirate(MyAttackers.Peek()).Loc;        // all the attackers are going together
 
             int distance = int.MaxValue;
@@ -209,8 +224,6 @@ namespace Pirates
             // if onky 2 pirates left
             if (myPirates.Count <= 2)
             {
-                MyAttackers = new Stack<int>();
-                Conquerors = new Stack<Pirate>();
                 foreach (Pirate pirate in myPirates)
                 {
                     Conquerors.Push(pirate);
@@ -256,6 +269,56 @@ namespace Pirates
                 {
                     MyAttackers.Push(Conquerors.Pop().Id);
                 }
+            }
+            else
+            {
+                foreach (Pirate pirate in myPirates)
+                {
+                    if (!MyAttackers.Contains(pirate.Id) && !Conquerors.Contains(pirate))
+                    {
+                        MyAttackers.Push(pirate.Id);
+                    }
+                }
+            }
+
+        }
+        public void UinteAttackers(IPirateGame state)
+        {
+            Stack<int> tmp = new Stack<int>();
+            Location firstAttackerLocation = state.GetMyPirate(MyAttackers.Peek()).Loc;
+
+            tmp.Push(MyAttackers.Pop());        // enter the first attacker because already use
+
+            bool isAllOk = true;
+
+            // go over the the stack and check for each pirate its location
+            while (MyAttackers.Count != 0)
+            {
+                if (state.GetMyPirate(MyAttackers.Peek()).Loc.Col == firstAttackerLocation.Col && state.GetMyPirate(MyAttackers.Peek()).Loc.Row - firstAttackerLocation.Row <= 3)
+                {
+                    state.SetSail(state.GetMyPirate(MyAttackers.Peek()), state.GetDirections(state.GetMyPirate(MyAttackers.Peek()), firstAttackerLocation)[0]);
+                    isAllOk = false;            // it means that one of the pirates is in the wrong location
+                }
+
+                else if (state.GetMyPirate(MyAttackers.Peek()).Loc.Row == firstAttackerLocation.Row && state.GetMyPirate(MyAttackers.Peek()).Loc.Col - firstAttackerLocation.Col <= 3)
+                {
+
+                    // move the pirate one step to the main pirate location
+                    state.SetSail(state.GetMyPirate(MyAttackers.Peek()), state.GetDirections(state.GetMyPirate(MyAttackers.Peek()), firstAttackerLocation)[0]);
+                    isAllOk = false;            // it means that one of the pirates is in the wrong location
+                }
+                tmp.Push(MyAttackers.Pop());        // pop the pirate and get the next one
+            }
+
+            if (isAllOk)
+            {
+                IsAttackersUnited = true;           // set to true only if all the pirates are in the good location
+            }
+
+            // return all the attackers to the stack
+            while (tmp.Count != 0)
+            {
+                MyAttackers.Push(tmp.Pop());
             }
         }
 
