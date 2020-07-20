@@ -27,9 +27,34 @@ namespace Pirates
             Init = true;
             IsAttackersUnited = false;
         }
-
+        public Stack<Pirate> CheckIfConquerorsDead(Stack<Pirate> stck, IPirateGame state)
+        {
+            Stack<Pirate> tempStck = new Stack<Pirate>();
+            foreach (Pirate p in stck)
+            {
+                if (!state.GetMyPirate(p.Id).IsLost)
+                {
+                    tempStck.Push(p);
+                }
+            }
+            return tempStck;
+        }
+        public Stack<int> CheckIfAttackersDead(Stack<int> stck, IPirateGame state)
+        {
+            Stack<int> tempStck = new Stack<int>();
+            foreach (int p in stck)
+            {
+                if (!state.GetMyPirate(p).IsLost)
+                {
+                    tempStck.Push(p);
+                }
+            }
+            return tempStck;
+        }
         public void DoTurn(IPirateGame state)
         {
+            Conquerors = CheckIfConquerorsDead(Conquerors, state);
+            MyAttackers = CheckIfAttackersDead(MyAttackers, state);
             int myPirateAlive = AllMyAlivePirates(state).Count;
             int enemyPiratesAlive = AllEnemyAlivePirates(state).Count;
             if(Init || !CheckStateHasChanged(state, myPirateAlive, enemyPiratesAlive))
@@ -73,11 +98,13 @@ namespace Pirates
             else if(MyPirateAlive != myAlive)
             {
                 MyPirateAlive = myAlive;
+                EnemyPiratesAlive = enemyAlive;
                 AddAttackerWhenRevive(state);
                 return false;
             }
             else
             {
+                MyPirateAlive = myAlive;
                 EnemyPiratesAlive = enemyAlive;
                 return false;
             }
@@ -252,13 +279,21 @@ namespace Pirates
             if (myPirates.Count <= 2)
             {
                 state.Debug("1");
+                state.Debug("Stack Length" + Conquerors.Count);
                 foreach (Pirate pirate in myPirates)
                 {
-                    Conquerors.Push(pirate);
+                    if (!Conquerors.Contains(pirate))
+                    {
+                        Conquerors.Push(pirate);
+                    }
                 }
                 while(MyAttackers.Count != 0)
                 {
                     MyAttackers.Pop();
+                }
+                foreach(Pirate p in Conquerors)
+                {
+                    state.Debug("Id in stack is : " + p.Id);
                 }
             }
             else if(Conquerors.Count == 0 && MyAttackers.Count != 0)
@@ -328,30 +363,37 @@ namespace Pirates
         public void UinteAttackers(IPirateGame state)
         {
             state.Debug("unite");
+            if(MyAttackers.Count == 0)
+            {
+                return;
+            }
             Stack<int> tmp = new Stack<int>();
             Location firstAttackerLocation = state.GetMyPirate(MyAttackers.Peek()).Loc;
 
             tmp.Push(MyAttackers.Pop());        // enter the first attacker because already use
 
             bool isAllOk = true;
-
+            int tempId;
             // go over the the stack and check for each pirate its location
             while (MyAttackers.Count != 0)
             {
-                if (state.GetMyPirate(MyAttackers.Peek()).Loc.Col == firstAttackerLocation.Col && state.GetMyPirate(MyAttackers.Peek()).Loc.Row - firstAttackerLocation.Row <= 3)
+                state.Debug("From unite: " + (state.GetMyPirate(MyAttackers.Peek()).Loc.Col == firstAttackerLocation.Col));
+                if (state.GetMyPirate(MyAttackers.Peek()).Loc.Col != firstAttackerLocation.Col && !(state.GetMyPirate(MyAttackers.Peek()).Loc.Row - firstAttackerLocation.Row <= 1))
                 {
                     state.SetSail(state.GetMyPirate(MyAttackers.Peek()), state.GetDirections(state.GetMyPirate(MyAttackers.Peek()), firstAttackerLocation)[0]);
                     isAllOk = false;            // it means that one of the pirates is in the wrong location
                 }
 
-                else if (state.GetMyPirate(MyAttackers.Peek()).Loc.Row == firstAttackerLocation.Row && state.GetMyPirate(MyAttackers.Peek()).Loc.Col - firstAttackerLocation.Col <= 3)
+                else if (state.GetMyPirate(MyAttackers.Peek()).Loc.Row != firstAttackerLocation.Row && !(state.GetMyPirate(MyAttackers.Peek()).Loc.Col - firstAttackerLocation.Col <= 1))
                 {
 
                     // move the pirate one step to the main pirate location
                     state.SetSail(state.GetMyPirate(MyAttackers.Peek()), state.GetDirections(state.GetMyPirate(MyAttackers.Peek()), firstAttackerLocation)[0]);
                     isAllOk = false;            // it means that one of the pirates is in the wrong location
                 }
-                tmp.Push(MyAttackers.Pop());        // pop the pirate and get the next one
+                tempId = MyAttackers.Pop();
+                firstAttackerLocation = state.GetMyPirate(tempId).Loc;
+                tmp.Push(tempId);        // pop the pirate and get the next one
             }
 
             if (isAllOk)
