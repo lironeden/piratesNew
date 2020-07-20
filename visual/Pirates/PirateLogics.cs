@@ -52,10 +52,35 @@ namespace Pirates
             }
             SendConquerors(state);
         }
-
+        public void AddAttackerWhenRevive(IPirateGame state)
+        {
+            List<Pirate> allPirates = AllMyAlivePirates(state);
+            foreach(Pirate p in allPirates)
+            {
+                if (!MyAttackers.Contains(p.Id) && !Conquerors.Contains(p))
+                {
+                    MyAttackers.Push(p.Id);
+                }
+            }
+        }
         public bool CheckStateHasChanged(IPirateGame state, int myAlive, int enemyAlive)
         {
-            return MyPirateAlive == myAlive && EnemyPiratesAlive == enemyAlive;
+            
+            if(MyPirateAlive == myAlive && EnemyPiratesAlive == enemyAlive)
+            {
+                return true;
+            }
+            else if(MyPirateAlive != myAlive)
+            {
+                MyPirateAlive = myAlive;
+                AddAttackerWhenRevive(state);
+                return false;
+            }
+            else
+            {
+                EnemyPiratesAlive = enemyAlive;
+                return false;
+            }
         }
 
         public void SendConquerors(IPirateGame pirateGame)
@@ -92,7 +117,7 @@ namespace Pirates
                 pirateGame.Debug("Removing " + tempArr[i]);
                 AvailablePirates.Remove(tempPirate);
             }
-
+            pirateGame.Debug("Length" + AvailablePirates.Count);
             if (notOurIslands.Count == 0 || AvailablePirates.Count == 0 || Conquerors.Count == 0)
             {
                 return;
@@ -106,8 +131,9 @@ namespace Pirates
                                               // Determines which island they will go to
             {
                 tempPirate = Conquerors.Pop();
-                if (tempPirate.IsLost)
+                if (pirateGame.GetMyPirate(tempPirate.Id).IsLost)
                 {
+                    pirateGame.Debug("Lost from dict");
                     continue;
                 }
                 tempStack.Push(tempPirate);
@@ -219,27 +245,37 @@ namespace Pirates
 
             int enemiesNumber = AllEnemyAlivePirates(state).Count;
             List<Pirate> myPirates = AllMyAlivePirates(state);
-
+            state.Debug("alive pir" + myPirates.Count);
+            state.Debug("alive enem" + enemiesNumber);
 
             // if onky 2 pirates left
             if (myPirates.Count <= 2)
             {
+                state.Debug("1");
                 foreach (Pirate pirate in myPirates)
                 {
                     Conquerors.Push(pirate);
                 }
             }
-
+            else if(Conquerors.Count == 0 && MyAttackers.Count != 0)
+            {
+                if(MyAttackers.Count > 2)
+                {
+                    Conquerors.Push(state.GetMyPirate(MyAttackers.Pop()));
+                }
+            }
             // need to change the stacks - too much attackers - need one more conquer
             else if (MyAttackers.Count + 1 > enemiesNumber)
             {
                 // add to the conwuers one pirate from the attackers
+                state.Debug("2");
                 Conquerors.Push(state.GetMyPirate(MyAttackers.Pop()));
             }
 
             else if (MyAttackers.Count == 0 && Conquerors.Count == 0 && myPirates.Count != 0)
             {
                 // can happened when all the ship are dead and come back slowly - add to conquers
+                state.Debug("3");
                 if (myPirates.Count <= 2)
                 {
                     foreach (Pirate pirate in myPirates)
@@ -262,7 +298,7 @@ namespace Pirates
             }
 
             // need to change the stack - too many conquers
-            else if (MyAttackers.Count + 1 < enemiesNumber)
+            else if (MyAttackers.Count + 2 < enemiesNumber)
             {
                 // add one more attacker only if there are more than one conquer
                 if (Conquerors.Count > 1)
@@ -272,6 +308,7 @@ namespace Pirates
             }
             else
             {
+                state.Debug("last");
                 foreach (Pirate pirate in myPirates)
                 {
                     if (!MyAttackers.Contains(pirate.Id) && !Conquerors.Contains(pirate))
@@ -284,6 +321,7 @@ namespace Pirates
         }
         public void UinteAttackers(IPirateGame state)
         {
+            state.Debug("unite");
             Stack<int> tmp = new Stack<int>();
             Location firstAttackerLocation = state.GetMyPirate(MyAttackers.Peek()).Loc;
 
