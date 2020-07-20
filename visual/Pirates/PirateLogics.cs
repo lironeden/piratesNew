@@ -63,7 +63,7 @@ namespace Pirates
                     AssignedConquerors.Remove(tempArr[i]);
                 }
             }
-
+            tempArr = AssignedConquerors.Keys.ToArray();
             for (int i = 0; i < tempArr.Length; i++)  // This loop runs over the Dictionary
                                                       //to direct the players to the Island
             {
