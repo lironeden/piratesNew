@@ -256,10 +256,15 @@ namespace Pirates
                 {
                     Conquerors.Push(pirate);
                 }
+                while(MyAttackers.Count != 0)
+                {
+                    MyAttackers.Pop();
+                }
             }
             else if(Conquerors.Count == 0 && MyAttackers.Count != 0)
             {
-                if(MyAttackers.Count > 2)
+                state.Debug("2");
+                if (MyAttackers.Count > 2)
                 {
                     Conquerors.Push(state.GetMyPirate(MyAttackers.Pop()));
                 }
@@ -268,14 +273,14 @@ namespace Pirates
             else if (MyAttackers.Count + 1 > enemiesNumber)
             {
                 // add to the conwuers one pirate from the attackers
-                state.Debug("2");
+                state.Debug("3");
                 Conquerors.Push(state.GetMyPirate(MyAttackers.Pop()));
             }
 
             else if (MyAttackers.Count == 0 && Conquerors.Count == 0 && myPirates.Count != 0)
             {
                 // can happened when all the ship are dead and come back slowly - add to conquers
-                state.Debug("3");
+                state.Debug("4");
                 if (myPirates.Count <= 2)
                 {
                     foreach (Pirate pirate in myPirates)
@@ -300,6 +305,7 @@ namespace Pirates
             // need to change the stack - too many conquers
             else if (MyAttackers.Count + 2 < enemiesNumber)
             {
+                state.Debug("5");
                 // add one more attacker only if there are more than one conquer
                 if (Conquerors.Count > 1)
                 {
